@@ -87,31 +87,12 @@
             "Metadata": {
                 "AWS::CloudFormation::Init": {
                     "configSets": {
-                        "provision": [ "install-puppet", "configure-hostname", "install-foreman", "clear-wait"]
-                    },
-                    "clear-wait": {
-                        "commands": {
-                            "0001_clear-wait-condition": {
-                                "command": { "Fn::Join" : ["", [
-                                    "curl -X PUT -H 'Content-Type:' --data-binary '{"
-                                        "\"Status\": \"SUCCESS\",",
-                                        "\"Reason\": \"Configuration Complete\",",
-                                        "\"UniqueId\" : \"", { "Ref": "ec2" }, "\",",
-                                        "\"Data\" : \"Application has completed configuration.\"",
-                                    "}' \"", { "Ref" : "waitHandle" }, "\""
-                                ]] }
-                            }
-                        }
-                    },
-                    "configure-hostname": {
-                        "commands": {
-                            "0001_modify-etc-hostname": {
-                                "command": { "Fn::Join": ["", ["echo \"", { "Ref": "InstanceHostName" }, "\" > /etc/hostname"]] }
-                            },
-                            "0002_modify-etc-hosts": {
-                                "command": "echo \"127.0.1.1 $(cat /etc/hostname) $(cat /etc/hostname | cut -d . -f 1)\" >> /etc/hosts"
-                            }
-                        }
+                        "provision": [
+                            "install-puppet",
+                            "configure-hostname", "install-foreman-apt-source", "install-foreman",
+                            "update-puppet-autosign",
+                            "clear-wait"
+                        ]
                     },
                     "install-puppet": {
                         "commands": {
@@ -131,25 +112,76 @@
                             }
                         }
                     },
+                    "configure-hostname": {
+                        "commands": {
+                            "0001_modify-etc-hostname": {
+                                "command": { "Fn::Join": ["", ["echo \"", { "Ref": "InstanceHostName" }, "\" > /etc/hostname"]] }
+                            },
+                            "0002_modify-etc-hosts": {
+                                "command": "echo \"127.0.1.1 $(cat /etc/hostname) $(cat /etc/hostname | cut -d . -f 1)\" >> /etc/hosts"
+                            }
+                        }
+                    },
+                    "install-foreman-apt-source": {
+                        "files" : {
+                            "/etc/apt/sources.list.d/foreman.list" : {
+                                "content" : { "Fn::Join" : ["\n", [
+                                    "deb http://deb.theforeman.org/ trusty 1.6",
+                                    "deb http://deb.theforeman.org/ plugins 1.6"
+                                ]]},
+                                "mode"  : "000644",
+                                "owner" : "root",
+                                "group" : "root"
+                            }
+                        }
+                    },
                     "install-foreman": {
                         "commands": {
-                            "0001_foreman-source-create-base": {
-                                "command": "echo \"deb http://deb.theforeman.org/ trusty 1.6\" > /etc/apt/sources.list.d/foreman.list"
-                            },
-                            "0002_foreman-source-append-plugins": {
-                                "command": "echo \"deb http://deb.theforeman.org/ plugins 1.6\" >> /etc/apt/sources.list.d/foreman.list"
-                            },
-                            "0003_foreman-source-install-key": {
+                            "0001_foreman-source-install-key": {
                                 "command": "wget -q http://deb.theforeman.org/pubkey.gpg -O- | apt-key add -"
                             },
-                            "0004_foreman-apt-get-update": {
+                            "0002_foreman-apt-get-update": {
                                 "command": "apt-get update"
                             },
-                            "0005_foreman-source-install-key": {
+                            "0003_foreman-source-install-key": {
                                 "command": "apt-get install -y foreman-installer"
                             },
-                            "0006_foreman-install": {
-                                "command": "foreman-installer --foreman-admin-password=changeme"
+                            "0004_foreman-install": {
+                                "command": "foreman-installer --foreman-admin-password=changeme",
+                                "ignoreErrors": true,
+                                "cwd" : "/root",
+                                "env" : {
+                                    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                                    "HOME" : "/root",
+                                    "LANG" : "en_US.UTF-8"
+                                }
+                            },
+                            "0004_puppet-self-register": {
+                                "command": "puppet agent --test"
+                            }
+                        }
+                    },
+                    "update-puppet-autosign": {
+                        "files" : {
+                            "/etc/puppet/autosign.conf" : {
+                                "content" : "*",
+                                "mode"  : "000664",
+                                "owner" : "foreman-proxy",
+                                "group" : "puppet"
+                            }
+                        }
+                    },
+                    "clear-wait": {
+                        "commands": {
+                            "0001_clear-wait-condition": {
+                                "command": { "Fn::Join" : ["", [
+                                    "curl -X PUT -H 'Content-Type:' --data-binary '{",
+                                        "\"Status\": \"SUCCESS\",",
+                                        "\"Reason\": \"Configuration Complete\",",
+                                        "\"UniqueId\" : \"ID1234\",",
+                                        "\"Data\" : \"Application has completed configuration.\"",
+                                    "}' \"", { "Ref" : "waitHandle" }, "\""
+                                ]] }
                             }
                         }
                     }
