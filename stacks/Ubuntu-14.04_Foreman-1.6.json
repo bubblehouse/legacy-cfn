@@ -148,7 +148,6 @@
                             },
                             "0004_foreman-install": {
                                 "command": "foreman-installer --foreman-admin-password=changeme",
-                                "ignoreErrors": true,
                                 "cwd" : "/root",
                                 "env" : {
                                     "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
