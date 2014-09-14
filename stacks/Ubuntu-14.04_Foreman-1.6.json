@@ -115,7 +115,8 @@
                 "AWS::CloudFormation::Init": {
                     "configSets": {
                         "provision": [
-                            "install-puppet-apt-source", "install-puppet",
+                            "install-puppet-apt-source",
+                            "install-packages",
                             "configure-hostname", "install-foreman-apt-source", "install-foreman",
                             "update-puppet-autosign",
                             "librarian-puppet-support", "librarian-puppet-install",
