@@ -55,7 +55,7 @@
         "ConfigurationFiles": {
             "htpasswd": {
                 "Content": [
-                    "phil:$apr1$uBM6Mgf1$/ldMcqKnxWWWO164XJhcs0"
+                    "nagiosadmin:$apr1$v9qs1Zmi$Sdnd3b2yXGqHyXVpWh25S/"
                 ]
             }
         }
@@ -100,6 +100,7 @@
                         "provision": [
                             "install-puppet-apt-source",
                             "install-packages",
+                            "nagios-support",
                             "configure-hostname",
                             "clear-wait"
                         ]
@@ -124,7 +125,7 @@
                             "apt": { 
                                 "puppet" : [],
                                 "git" : [],
-                                "nagios" : []
+                                "nagios3" : []
                             }
                         }
                     },
@@ -140,7 +141,7 @@
                     },
                     "nagios-support": {
                         "files" : {
-                            "/etc/htpasswd" : {
+                            "/etc/nagios3/htpasswd.users" : {
                                 "content" : { "Fn::Join": ["\n", { "Fn::FindInMap" : [ "ConfigurationFiles", "htpasswd", "Content" ]} ] },
                                 "mode"  : "000644",
                                 "owner" : "root",
