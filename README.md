@@ -1,4 +1,7 @@
-cloudformation-opsworks-puppet
+cloudformation-bubblehouse
 ==============================
 
-A CloudFormation template that uses OpsWorks to configure a Puppetmaster
+Convenient AWS CloudFormation templates.
+
+Ubuntu-14.04_Foreman-1.6:
+> A CloudFormation template that installs and configures a Puppetmaster based on Foreman
