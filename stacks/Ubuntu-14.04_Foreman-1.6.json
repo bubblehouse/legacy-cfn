@@ -140,7 +140,10 @@
                     },
                     "install-packages": {
                         "packages": {
-                            "apt": [ "puppet", "git" ]
+                            "apt": { 
+                                "puppet" : [],
+                                "git" : []
+                            }
                         }
                     },
                     "configure-hostname": {
