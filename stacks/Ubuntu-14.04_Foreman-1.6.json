@@ -87,12 +87,26 @@
             "Metadata": {
                 "AWS::CloudFormation::Init": {
                     "configSets": {
-                        "provision": [ "configure-hostname", "install-puppet", "install-foreman" ]
+                        "provision": [ "install-puppet", "configure-hostname", "install-foreman", "clear-wait"]
+                    },
+                    "clear-wait": {
+                        "commands": {
+                            "0001_clear-wait-condition": {
+                                "command": { "Fn::Join" : ["", [
+                                    "curl -X PUT -H 'Content-Type:' --data-binary '{"
+                                        "\"Status\": \"SUCCESS\",",
+                                        "\"Reason\": \"Configuration Complete\",",
+                                        "\"UniqueId\" : \"", { "Ref": "ec2" }, "\",",
+                                        "\"Data\" : \"Application has completed configuration.\"",
+                                    "}' \"", { "Ref" : "waitHandle" }, "\""
+                                ]] }
+                            }
+                        }
                     },
                     "configure-hostname": {
                         "commands": {
                             "0001_modify-etc-hostname": {
-                                "command": { "Fn:Join": ["", ["echo \"", { "Ref": "InstanceHostName" }, "\" > /etc/hostname"]] }
+                                "command": { "Fn::Join": ["", ["echo \"", { "Ref": "InstanceHostName" }, "\" > /etc/hostname"]] }
                             },
                             "0002_modify-etc-hosts": {
                                 "command": "echo \"127.0.1.1 $(cat /etc/hostname) $(cat /etc/hostname | cut -d . -f 1)\" >> /etc/hosts"
@@ -135,12 +149,24 @@
                                 "command": "apt-get install -y foreman-installer"
                             },
                             "0006_foreman-install": {
-                                "command": "foreman-installer"
+                                "command": "foreman-installer --foreman-admin-password=changeme"
                             }
                         }
                     }
                 }
             }
+        },
+        "wait" : {
+            "Type" : "AWS::CloudFormation::WaitCondition",
+            "DependsOn" : "ec2",
+            "Properties" : {
+                "Handle" : { "Ref" : "waitHandle" },
+                "Timeout" : "1800"
+            }
+        },
+        "waitHandle" : {
+             "Type" : "AWS::CloudFormation::WaitConditionHandle",
+             "Properties" : {}
         }
     },
     
