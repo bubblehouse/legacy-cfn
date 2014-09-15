@@ -235,11 +235,23 @@
                             },
                             "0003_configure-librarian-puppet": {
                                 "command": "yes no | bundle exec librarian-puppet init",
-                                "cwd": "/usr/share/puppet"
+                                "cwd": "/usr/share/puppet",
+                                "env" : {
+                                    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                                    "HOME" : "/root",
+                                    "LANG" : "en_US.UTF-8",
+                                    "PWD"  : "/usr/share/puppet"
+                                }
                             },
                             "0004_install-puppet-modules": {
                                 "command": "bundle exec librarian-puppet install",
-                                "cwd": "/usr/share/puppet"
+                                "cwd": "/usr/share/puppet",
+                                "env" : {
+                                    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                                    "HOME" : "/root",
+                                    "LANG" : "en_US.UTF-8",
+                                    "PWD"  : "/usr/share/puppet"
+                                }
                             }
                         }
                     },
