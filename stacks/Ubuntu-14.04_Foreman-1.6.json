@@ -151,7 +151,10 @@
                             "0001_modify-etc-hostname": {
                                 "command": { "Fn::Join": ["", ["echo \"", { "Ref": "InstanceHostName" }, "\" > /etc/hostname"]] }
                             },
-                            "0002_modify-etc-hosts": {
+                            "0002_set-hostname": {
+                                "command": "hostname -b $(cat /etc/hostname)"
+                            }
+                            "0003_modify-etc-hosts": {
                                 "command": "echo \"127.0.1.1 $(cat /etc/hostname) $(cat /etc/hostname | cut -d . -f 1)\" >> /etc/hosts"
                             }
                         }
