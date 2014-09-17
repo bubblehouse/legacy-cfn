@@ -11,6 +11,16 @@
             "Description": "'Name' tag for instance.",
             "Type": "String"
         },
+        "KeyBucketAccess" : {
+            "Default" : "",
+            "Description" : "Access key for S3.", 
+            "Type" : "String"
+        },
+        "KeyBucketSecret" : {
+            "Default" : "",
+            "Description" : "Secret key for S3.", 
+            "Type" : "String"
+        },
         "KeyPairName": {
             "Default": "bubblehouse-master_20140323",
             "Description": "Name of an existing EC2 KeyPair to enable ubuntu@ SSH access to the server",
@@ -102,7 +112,7 @@
                       "buckets" : {"Ref" : "KeyBucket"}
                     }
                 },
-`                "AWS::CloudFormation::Init": {
+                "AWS::CloudFormation::Init": {
                     "configSets": {
                         "provision": [
                             "create-admins", "configure-admins-userfiles",
@@ -165,7 +175,7 @@
                         "commands": {
                             "0001_aptitude-safe-upgrade": {
                                 "command": "aptitude safe-upgrade -y"
-                            },
+                            }
                         }
                     },
                     "install-packages": {
