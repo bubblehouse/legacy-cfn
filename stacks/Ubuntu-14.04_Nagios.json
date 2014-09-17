@@ -18,7 +18,7 @@
             "Type": "String"
         },
         "SecurityGroupIds": {
-            "Default": "sg-6946510b",
+            "Default": "sg-68aff60d",
             "Description": "Comma-separated list of security group IDs.",
             "Type": "CommaDelimitedList"
         },
