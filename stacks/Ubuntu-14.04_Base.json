@@ -1,14 +1,14 @@
 {
-    "Description": "org.bubblehouse.cloudformation.stacks.Ubuntu-14.04_Nagios@v0.0.1",
+    "Description": "org.bubblehouse.cloudformation.stacks.Ubuntu-14.04_Base@v0.0.1",
     
     "Parameters": {
         "InstanceHostName": {
-            "Description": "A fully qualified url or shell statment in $()",
+            "Description": "The name (short hostname) of this instance.",
             "Type": "String"
         },
-        "InstanceNameTag": {
-            "Default": "",
-            "Description": "'Name' tag for instance.",
+        "InstanceZone": {
+            "Default": "bubblehouse.org",
+            "Description": "The zone to add this instance's DNS name to.",
             "Type": "String"
         },
         "KeyBucketAccess" : {
@@ -55,7 +55,7 @@
         },
         "KeyBucket" : {
             "Default" : "archive.bubblehouse.org",
-            "Description" : "Name of the bucket to pull keys from for pchristensen SSH access to the instance", 
+            "Description" : "Name of the bucket to pull keys from for phil SSH access to the instance", 
             "Type" : "String"
         },
         "KeyPath" : {
@@ -67,7 +67,8 @@
     
     "Outputs": {
         "InstanceId": { "Value": { "Ref": "ec2" } },
-        "PublicIP": { "Value": { "Ref": "eip" } }
+        "PublicIP": { "Value": { "Ref": "eip" } },
+        "DNSName": { "Value": { "Ref": "eip" } }
     },
     
     "Resources": {
@@ -83,7 +84,7 @@
             "Properties": {
                 "InstanceType": { "Ref": "InstanceType" },
                 "Tags": [
-                    { "Key": "Name", "Value": { "Ref": "InstanceNameTag" } }
+                    { "Key": "Name", "Value": { "Ref": "InstanceHostName" } }
                 ],
                 "ImageId": { "Ref": "SelectedImageId" },
                 "SubnetId": { "Ref": "SubnetId" },
@@ -118,29 +119,33 @@
                             "create-admins", "configure-admins-userfiles",
                             "configure-hostname",
                             "install-puppet-apt-source",
-                            "install-updates", "install-packages",
+                            "install-unattended-upgrades",
+                            "install-packages",
                             "clear-wait"
                         ]
                     },
                     "create-admins" : {
                         "commands" : {
-                            "0001_pchristensen" : {
-                                "command" : "useradd -m -d /home/pchristensen pchristensen"
+                            "0001_phil" : {
+                                "command" : "sudo adduser -q --disabled-password --gecos \"\" phil"
                             },
-                            "0002_pchristensen-dot-ssh" : {
-                                "command" : "mkdir -m 700 /home/pchristensen/.ssh"
+                            "0002_phil-admin-group" : {
+                                "command" : "sudo adduser phil admin"
                             },
-                            "0003_pchristensen-chown-dot-ssh" : {
-                                "command" : "chown pchristensen:pchristensen /home/pchristensen/.ssh"
+                            "0003_phil-dot-ssh" : {
+                                "command" : "mkdir -m 700 /home/phil/.ssh"
+                            },
+                            "0004_phil-chown-dot-ssh" : {
+                                "command" : "chown phil:phil /home/phil/.ssh"
                             }
                         }
                     },
                     "configure-admins-userfiles" : {
                         "files" : {
-                            "/home/pchristensen/.ssh/authorized_keys" : {
+                            "/home/phil/.ssh/authorized_keys" : {
                                 "source" : { "Fn::Join" : ["/", ["https://s3.amazonaws.com", {"Ref" : "KeyBucket"}, {"Ref" : "KeyPath"}]] },
                                 "mode" : "000600",
-                                "owner" : "pchristensen",
+                                "owner" : "phil",
                                 "group" : "admin",
                                 "authentication" : "S3ReadOnlyCreds"
                             }
@@ -164,17 +169,20 @@
                     "configure-hostname": {
                         "commands": {
                             "0001_modify-etc-hostname": {
-                                "command": { "Fn::Join": ["", ["echo \"", { "Ref": "InstanceHostName" }, "\" > /etc/hostname"]] }
+                                "command": { "Fn::Join": ["", ["echo \"", { "Ref": "InstanceHostName" },".", { "Ref" : "InstanceZone"}, "\" > /etc/hostname"]] }
                             },
-                            "0002_modify-etc-hosts": {
+                            "0002_set-hostname": {
+                                "command": "hostname -b $(cat /etc/hostname)"
+                            },
+                            "0003_modify-etc-hosts": {
                                 "command": "echo \"127.0.1.1 $(cat /etc/hostname) $(cat /etc/hostname | cut -d . -f 1)\" >> /etc/hosts"
                             }
                         }
                     },
-                    "install-updates": {
-                        "commands": {
-                            "0001_aptitude-safe-upgrade": {
-                                "command": "aptitude safe-upgrade -y"
+                    "install-unattended-upgrades": {
+                        "packages": {
+                            "apt": { 
+                                "unattended-upgrades" : []
                             }
                         }
                     },
@@ -204,6 +212,19 @@
                         }
                     }
                 }
+            }
+        },
+        "dns" : {
+            "Type" : "AWS::Route53::RecordSet",
+            "DependsOn" : ["ec2", "eip"],
+            "Properties" : {
+                "HostedZoneName" : { "Fn::Join" : ["", [{ "Ref" : "InstanceZone"}, "."]] },
+                "Name" : { "Fn::Join" : ["", [{ "Ref" : "InstanceHostName"}, ".", { "Ref" : "InstanceZone"}, "."]] },
+                "Type" : "CNAME",
+                "TTL" : "300",
+                "ResourceRecords" : [
+                    { "Fn::GetAtt" : [ "ec2" , "PublicDnsName" ] }
+                ]
             }
         },
         "wait" : {
