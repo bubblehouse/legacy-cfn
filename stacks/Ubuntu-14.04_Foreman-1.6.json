@@ -118,9 +118,13 @@
                         "provision": [
                             "create-admins", "configure-admins-userfiles",
                             "configure-hostname",
-                            "install-puppet-apt-source",
                             "install-unattended-upgrades",
+                            "install-puppet-apt-source",
+                            "install-foreman-apt-source",
                             "install-packages",
+                            "install-foreman",
+                            "librarian-puppet-support",
+                            "librarian-puppet-install",
                             "clear-wait"
                         ]
                     },
@@ -194,6 +198,92 @@
                                 "virtualenvwrapper" : [],
                                 "tree" : [],
                                 "ccze" : []
+                            }
+                        }
+                    },
+                    "install-foreman-apt-source": {
+                        "files" : {
+                            "/etc/apt/sources.list.d/foreman.list" : {
+                                "content" : { "Fn::Join" : ["\n", [
+                                    "deb http://deb.theforeman.org/ trusty 1.6",
+                                    "deb http://deb.theforeman.org/ plugins 1.6"
+                                ]]},
+                                "mode"  : "000644",
+                                "owner" : "root",
+                                "group" : "root"
+                            }
+                        }
+                    },
+                    "install-foreman": {
+                        "commands": {
+                            "0001_foreman-source-install-key": {
+                                "command": "wget -q http://deb.theforeman.org/pubkey.gpg -O- | apt-key add -"
+                            },
+                            "0002_foreman-apt-get-update": {
+                                "command": "apt-get update"
+                            },
+                            "0003_foreman-source-install-key": {
+                                "command": "apt-get install -y foreman-installer"
+                            },
+                            "0004_foreman-install": {
+                                "command": "foreman-installer --foreman-admin-password=changeme",
+                                "cwd" : "/root",
+                                "env" : {
+                                    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                                    "HOME" : "/root",
+                                    "LANG" : "en_US.UTF-8"
+                                }
+                            },
+                            "0005_puppet-self-register": {
+                                "command": "puppet agent --test"
+                            }
+                        }
+                    },
+                    "librarian-puppet-support": {
+                        "files" : {
+                            "/usr/share/puppet/Gemfile" : {
+                                "content" : { "Fn::Join": ["\n", { "Fn::FindInMap" : [ "ConfigurationFiles", "Gemfile", "Content" ]} ] },
+                                "mode"  : "000644",
+                                "owner" : "root",
+                                "group" : "root"
+                            },
+                            "/usr/share/puppet/Puppetfile" : {
+                                "content" : { "Fn::Join": ["\n", { "Fn::FindInMap" : [ "ConfigurationFiles", "Puppetfile", "Content" ]} ] },
+                                "mode"  : "000644",
+                                "owner" : "root",
+                                "group" : "root"
+                            }
+                        }
+                    },
+                    "librarian-puppet-install": {
+                        "commands": {
+                            "0001_install-bundle": {
+                                "command": "bundle install --path=vendor/bundle",
+                                "cwd": "/usr/share/puppet"
+                            },
+                            "0002_git-init": {
+                                "command": "git init",
+                                "cwd": "/usr/share/puppet"
+                            },
+                            "0003_configure-librarian-puppet": {
+                                "command": "yes no | bundle exec librarian-puppet init",
+                                "cwd": "/usr/share/puppet",
+                                "env" : {
+                                    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                                    "HOME" : "/root",
+                                    "LANG" : "en_US.UTF-8",
+                                    "PWD"  : "/usr/share/puppet"
+                                }
+                            },
+                            "0004_install-puppet-modules": {
+                                "command": "bundle exec librarian-puppet install",
+                                "cwd": "/usr/share/puppet",
+                                "env" : {
+                                    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                                    "HOME" : "/root",
+                                    "LANG" : "en_US.UTF-8",
+                                    "PWD"  : "/usr/share/puppet"
+                                }
                             }
                         }
                     },
