@@ -1,5 +1,5 @@
 {
-    "Description": "org.bubblehouse.cloudformation.stacks.Ubuntu-14.04_Base@v0.0.1",
+    "Description": "org.bubblehouse.cloudformation.stacks.Ubuntu-14.04_Foreman-1.6@v0.0.2",
     
     "Parameters": {
         "InstanceHostName": {
@@ -62,6 +62,32 @@
             "Default" : "ssh-keys/chalkpie-personal-key.pub",
             "Description" : "Path within the bucket to your public key.", 
             "Type" : "String"
+        }
+    },
+    
+    "Mappings": {
+        "ConfigurationFiles": {
+            "Gemfile": {
+                "Content": [
+                    "source 'https://rubygems.org'",
+                    "",
+                    "gem 'librarian-puppet'",
+                    "gem 'io-console'"
+                ]
+            },
+            "Puppetfile": {
+                "Content": [
+                    "#!/usr/bin/env ruby",
+                    "#^syntax detection",
+                    "",
+                    "forge 'https://forgeapi.puppetlabs.com'",
+                    "",
+                    "mod 'puppetlabs-apt', '1.6.0'",
+                    "mod 'puppetlabs-stdlib', '4.3.2'",
+                    "mod 'nanliu-staging', '1.0.0'",
+                    "mod 'puppetlabs-vcsrepo', '1.1.0'"
+                ]
+            }
         }
     },
     
