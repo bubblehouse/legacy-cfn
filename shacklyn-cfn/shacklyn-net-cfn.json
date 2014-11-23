@@ -1,96 +1,163 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
 
-    "Description": "Network layout",
+    "Description": "Shacklyn network stack",
 
     "Parameters": {
         "BaseName": {
-            "Default": "dev",
             "Description": "The base name for this network.",
             "Type": "String"
         },
         "BaseNetwork": {
             "AllowedPattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}",
             "ConstraintDescription": "That doesn't look like a CIDR block.",
-            "Default": "10.0.0.0/16",
             "Description": "This network's CIDR block.",
             "Type": "String"
         },
-        "DomainName": {
-            "Default": "bubblehouse.net",
+        "DhcpDomainName": {
             "Description": "The domain to configure for this network.",
+            "Type": "String"
+        },
+        "DhcpNs1": {
+            "Description": "The primary nameserver for this network.",
+            "Type": "String"
+        },
+        "DhcpNs2": {
+            "Description": "The secondary nameserver for this network.",
+            "Type": "String"
+        },
+        "DhcpNtp": {
+            "Description": "The NTP server for this network.",
+            "Type": "String"
+        },
+        "DhcpNetbios": {
+            "Description": "The Netbios server for this network.",
             "Type": "String"
         },
         "GatewayAccessCidr": {
             "AllowedPattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}",
             "ConstraintDescription": "That doesn't look like a CIDR block.",
-            "Default": "0.0.0.0/0",
             "Description": "Limit SSH access to the NAT gateway to this CIDR block.",
+            "Type": "String"
+        },
+        "GatewayKeyPair": {
+            "Description": "The keypair to use for the NAT instance.",
             "Type": "String"
         },
         "ManagementAZ": {
             "AllowedValues": [ "a", "b", "c", "d", "e" ],
-            "Default": "b",
             "Description": "AZ for management and deploy tools only.",
             "Type": "String"
         },
         "ManagementPrivateCidr": {
             "AllowedPattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}",
             "ConstraintDescription": "That doesn't look like a CIDR block.",
-            "Default": "10.0.0.0/24",
             "Description": "CIDR block for the PRIVATE management network.",
             "Type": "String"
         },
         "ManagementPublicCidr": {
             "AllowedPattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}",
             "ConstraintDescription": "That doesn't look like a CIDR block.",
-            "Default": "10.0.1.0/24",
             "Description": "CIDR block for the PUBLIC management network.",
             "Type": "String"
         },
         "PrimaryAZ": {
             "AllowedValues": [ "a", "b", "c", "d", "e" ],
-            "Default": "d",
             "Description": "AZ for redundant services.",
             "Type": "String"
         },
         "PrimaryPrivateCidr": {
             "AllowedPattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}",
             "ConstraintDescription": "That doesn't look like a CIDR block.",
-            "Default": "10.0.2.0/24",
             "Description": "CIDR block for the PRIVATE primary network.",
             "Type": "String"
         },
         "PrimaryPublicCidr": {
             "AllowedPattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}",
             "ConstraintDescription": "That doesn't look like a CIDR block.",
-            "Default": "10.0.3.0/24",
             "Description": "CIDR block for the PUBLIC primary network.",
             "Type": "String"
         },
         "SecondaryAZ": {
             "AllowedValues": [ "a", "b", "c", "d", "e" ],
-            "Default": "e",
             "Description": "AZ for redundant services.",
             "Type": "String"
         },
         "SecondaryPrivateCidr": {
             "AllowedPattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}",
             "ConstraintDescription": "That doesn't look like a CIDR block.",
-            "Default": "10.0.4.0/24",
             "Description": "CIDR block for the PRIVATE secondary network.",
             "Type": "String"
         },
         "SecondaryPublicCidr": {
             "AllowedPattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}",
             "ConstraintDescription": "That doesn't look like a CIDR block.",
-            "Default": "10.0.5.0/24",
             "Description": "CIDR block for the PUBLIC secondary network.",
             "Type": "String"
         }
     },
 
+    "Conditions": {
+        "UpdateDhcpDns" : { "Fn::Not" : [{ "Fn::Equals" : [{ "Ref" : "DhcpNs1" }, "AmazonProvidedDNS"] }] }
+    },
+
+    "Outputs" : {
+        "vpcId" : {
+            "Value" : { "Ref" : "network" },
+            "Description" : "VPC container ID"
+        },
+        "natSecurityGroupId" : {
+            "Value" : { "Ref" : "natGatewayInterfaceSecurityGroup" },
+            "Description" : "Security group for NAT gateway"
+        },
+        "managementPrivateSubnetId" : {
+            "Value" : { "Ref" : "managementPublicSubnet" },
+            "Description" : "Management private subnet ID"
+        },
+        "managementPublicSubnetId" : {
+            "Value" : { "Ref" : "managementPublicSubnet" },
+            "Description" : "Management public subnet ID"
+        },
+        "primaryPrivateSubnetId" : {
+            "Value" : { "Ref" : "primaryPrivateSubnet" },
+            "Description" : "Primary private subnet ID"
+        },
+        "primaryPublicSubnetId" : {
+            "Value" : { "Ref" : "primaryPublicSubnet" },
+            "Description" : "Primary public subnet ID"
+        },
+        "secondaryPrivateSubnetId" : {
+            "Value" : { "Ref" : "secondaryPrivateSubnet" },
+            "Description" : "Secondary private subnet ID"
+        },
+        "secondaryPublicSubnetId" : {
+            "Value" : { "Ref" : "secondaryPublicSubnet" },
+            "Description" : "Secondary public subnet ID"
+        }
+    },
+    
     "Resources": {
+        "nat" : {
+            "Type" : "AWS::CloudFormation::Stack",
+            "Properties" : {
+                "TemplateURL" : "https://s3.amazonaws.com/cf.shacklyn.net/shacklyn-asg-cfn.json",
+                "Parameters" : {
+                    "AvailabiltyZoneIds": { "Fn::Join" : ["", [{ "Ref" : "AWS::Region" }, { "Ref" : "ManagementAZ" }] ]},
+                    "BaseInstanceTag": { "Fn::Join" : ["", [{ "Ref" : "BaseName" }, "-001-nat"] ]},
+                    "InstanceType": "m1.small",
+                    "KeyPairName": { "Ref" : "GatewayKeyPair" },
+                    "PuppetEnvironment": { "Ref" : "BaseName" },
+                    "SecurityGroupIds": { "Ref" : "natGatewayInterfaceSecurityGroup" },
+                    "SelectedImageId": "ami-224dc94a",
+                    "EC2SubnetIds": { "Ref" : "managementPublicSubnet" },
+                    "SourceDestCheck": "false",
+                    "NumInstances": "1",
+                    "ElasticNetworkInterfaceID": { "Ref" : "natGatewayInterface" },
+                    "EndpointDNSName": { "Fn::Join" : ["-", ["gateway", { "Ref" : "BaseName" }] ]},
+                    "EndpointZone": { "Ref" : "DhcpDomainName" }
+                }
+            }
+        },
         "network": {
            "Type" : "AWS::EC2::VPC",
            "Properties" : {
@@ -107,8 +174,12 @@
         "dhcpOptionSet": {
             "Type" : "AWS::EC2::DHCPOptions",
             "Properties" : {
-                "DomainName" : { "Ref" : "DomainName" },
-                "DomainNameServers" : ["AmazonProvidedDNS"],
+                "DomainName" : { "Ref" : "DhcpDomainName" },
+                "DomainNameServers" : { "Fn::If" : [
+                    "UpdateDhcpDns",
+                    [ { "Ref" : "DhcpNs1" }, { "Ref" : "DhcpNs2" } ],
+                    { "Ref" : "AWS::NoValue" }
+                ]},
                 "Tags" : [{
                     "Key": "Name",
                     "Value": { "Fn::Join": ["-", [{ "Ref" : "BaseName"}, "default"]]}
