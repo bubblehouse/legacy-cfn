@@ -552,7 +552,7 @@
                                     { "Fn::Join": [ " ", [
                                         "aws", "ec2", "attach-network-interface",
                                         " --region", { "Ref" : "AWS::Region" },
-                                        " --network-interface-id", { "Ref" : "staticInternalInterface" },
+                                        " --network-interface-id", { "Ref" : "ElasticNetworkInterfaceID" },
                                         " --device-index", "1",
                                         " --instance-id", "$(cat /var/lib/cloud/data/instance-id)"
                                     ]] },

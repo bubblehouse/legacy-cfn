@@ -206,7 +206,7 @@
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
                 "VpcId" : { "Ref" : "network" },
-                "GroupDescription" : { "Fn::Join" : [ " ", ["Access rules for the", { "Ref" : "BaseName" }, " NAT gateway"]] },
+                "GroupDescription" : { "Fn::Join" : [ " ", ["[cfn] Access rules for the", { "Ref" : "BaseName" }, " NAT gateway"]] },
                 "SecurityGroupIngress" : [{
                     "CidrIp" : { "Ref" : "BaseNetwork"},
                     "IpProtocol" : -1,
