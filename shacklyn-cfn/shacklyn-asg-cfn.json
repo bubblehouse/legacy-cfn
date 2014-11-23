@@ -125,7 +125,7 @@
                     "Type" : "A",
                     "TTL": 300,
                     "ResourceRecords" : [
-                        "Value": { "Fn::GetAtt" : ["staticAddress", "CanonicalHostedZoneNameID"] }
+                        { "Ref" : "staticAddress" }
                     ]
                 }]
             }
@@ -141,10 +141,10 @@
            "Type": "AWS::EC2::EIPAssociation",
            "Condition": "AssociateStaticIpToInterface",
            "Properties": {
-              "AllocationId": { "Ref" : "staticAddress" },
+              "AllocationId": { "Fn::GetAtt" : ["staticAddress", "AllocationId"] },
               "NetworkInterfaceId": { "Ref" : "ElasticNetworkInterfaceID" }
            }
-        }
+        },
         "autoScaleQueue": {
             "Type" : "AWS::SQS::Queue",
             "Properties" : {
@@ -225,6 +225,8 @@
                             "Effect": "Allow",
                             "Action": [
                                 "cloudformation:*",
+                                "ec2:ModifyInstanceAttribute",
+                                "ec2:AttachNetworkInterface",
                                 "ec2:AttachNetworkInterface",
                                 "ec2:AssociateAddress",
                                 "ec2:AttachVolume",
@@ -387,7 +389,6 @@
                         " - python-pip",
                         " - augeas-tools",
                         " - tree",
-                        " - jq",
                         "",
                         "--===============5031922726237328048==",
                         "Content-Type: text/x-shellscript; charset=\"us-ascii\"",
@@ -416,6 +417,9 @@
                 "AWS::CloudFormation::Init" : {
                     "config": {
                         "files": {
+                            "/usr/local/bin/jq": {
+                                "source": "http://stedolan.github.io/jq/download/linux64/jq"
+                            },
                             "/etc/facter/facts.d/environment.txt": {
                                 "content": { "Fn::Join" : ["=", ["environment", { "Ref" : "PuppetEnvironment" }]] }
                             },
@@ -430,11 +434,6 @@
                                     { "Fn::Join" : ["", ["$instance_name = \"", { "Ref" : "BaseInstanceTag" }, "-${instance_slug}\""]]},
                                     "exec { tag:",
                                     "  command => join(['aws ec2 create-tags --resources ', $ec2_instance_id, ' --tags Key=Name,Value=', $instance_name], ''),",
-                                    "  environment => 'AWS_DEFAULT_REGION=us-east-1',",
-                                    "  path => '/usr/bin'",
-                                    "}",
-                                    "exec { sourceDest:",
-                                    "  command => join(['aws ec2 modify-instance-attribute --instance-id ', $ec2_instance_id, ' --no-source-dest-check'], ''),",
                                     "  environment => 'AWS_DEFAULT_REGION=us-east-1',",
                                     "  path => '/usr/bin'",
                                     "}",
@@ -458,10 +457,11 @@
                                     "  changes   => [",
                                     { "Fn::Join" : ["", ["      'set main/environment ", { "Ref" : "PuppetEnvironment" }, "',"]]},
                                     "      'rm main/templatedir'",
+                                    "      'set agent/waitforcert 30s'",
                                     "    ]",
                                     "}",
                                     "cron { puppet:",
-                                    { "Fn::Join" : ["", ["  command => '/usr/bin/puppet agent --test --environment=", { "Ref" : "PuppetEnvironment" }, "',"]]},
+                                    { "Fn::Join" : ["", ["  command => '/usr/bin/puppet agent --test --environment=", { "Ref" : "PuppetEnvironment" }, " &> /dev/null',"]]},
                                     "  user    => root,",
                                     "  minute  => '*/30'",
                                     "}"
@@ -526,21 +526,33 @@
                                     "true"
                                 ]}
                             },
-                            "0004_wait-for-volume": {
+                            "0004_awscli-disable-source-dest-check": {
+                                "command": {"Fn::If" : [
+                                    "DisableSourceDestCheck",
+                                    { "Fn::Join": [ " ", [
+                                        "aws", "ec2", "modify-instance-attribute",
+                                        "--region", { "Ref" : "AWS::Region" },
+                                        "--instance-id", "$(cat /var/lib/cloud/data/instance-id)",
+                                        "--no-source-dest-check"
+                                    ]] },
+                                    "true"
+                                ]}
+                            },
+                            "0005_wait-for-volume": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     "sleep 30",
                                     "true"
                                 ]}
                             },
-                            "0005_mount-volume": {
+                            "0006_mount-volume": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     "mount /dev/xvdf",
                                     "true"
                                 ]}
                             },
-                            "0006_puppet-agent-first-run": {
+                            "0007_puppet-agent-first-run": {
                                 "command": "puppet agent --test",
                                 "ignoreErrors": true
                             }

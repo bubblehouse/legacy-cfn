@@ -143,7 +143,7 @@
                 "TemplateURL" : "https://s3.amazonaws.com/cf.shacklyn.net/shacklyn-asg-cfn.json",
                 "Parameters" : {
                     "AvailabiltyZoneIds": { "Fn::Join" : ["", [{ "Ref" : "AWS::Region" }, { "Ref" : "ManagementAZ" }] ]},
-                    "BaseInstanceTag": { "Fn::Join" : ["", [{ "Ref" : "BaseName" }, "-001-nat"] ]},
+                    "BaseInstanceTag": { "Fn::Join" : ["-", ["gateway", { "Ref" : "BaseName" }] ]},
                     "InstanceType": "t2.micro",
                     "KeyPairName": { "Ref" : "GatewayKeyPair" },
                     "PuppetEnvironment": { "Ref" : "BaseName" },
