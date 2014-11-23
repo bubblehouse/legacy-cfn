@@ -212,6 +212,11 @@
                     "IpProtocol" : -1,
                     "FromPort" : -1,
                     "ToPort" : -1
+                }, {
+                    "CidrIp" : { "Ref" : "GatewayAccessCidr"},
+                    "IpProtocol" : 6,
+                    "FromPort" : 22,
+                    "ToPort" : 22
                 }],
                 "Tags" :  [{
                     "Key": "Name",

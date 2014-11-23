@@ -32,6 +32,13 @@
             "Default": "",
             "Description": "The Netbios server for this network.",
             "Type": "String"
+        },
+        "GatewayAccessCidr": {
+            "Default": "158.222.179.105/32",
+            "AllowedPattern": "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}",
+            "ConstraintDescription": "That doesn't look like a CIDR block.",
+            "Description": "The IP from which you'll administer the NAT gateway.",
+            "Type": "String"
         }
     },
     
