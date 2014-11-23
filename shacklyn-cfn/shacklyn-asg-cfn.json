@@ -70,7 +70,7 @@
             "Type": "String"
         },
         "EncryptedVolumeSize" : {
-            "Default": "0",
+            "Default": "8",
             "Description": "How big should this instance's encrypted volume be (gigabytes)?",
             "Type": "Number"
         }
