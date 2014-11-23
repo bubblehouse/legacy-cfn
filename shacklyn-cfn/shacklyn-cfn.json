@@ -55,7 +55,7 @@
                     "DhcpNs2": { "Ref" : "DhcpNs2" },
                     "DhcpNtp": { "Ref" : "DhcpNtp" },
                     "DhcpNetbios": { "Ref" : "DhcpNetbios" },
-                    "GatewayAccessCidr": "0.0.0.0/0",
+                    "GatewayAccessCidr": { "Ref" : "GatewayAccessCidr" },
                     "GatewayKeyPair": { "Ref" : "DefaultKeyPair" },
                     "ManagementAZ": "a",
                     "ManagementPrivateCidr": "10.0.0.0/24",
