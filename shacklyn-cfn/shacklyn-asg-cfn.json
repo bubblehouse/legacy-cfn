@@ -439,13 +439,6 @@
                                 "source": "http://stedolan.github.io/jq/download/linux64/jq",
                                 "mode": "0755"
                             },
-                            "/usr/local/bin/tail-cfn-logs": {
-                                "content": { "Fn::Join" : ["\n", [
-                                    "#!/bin/bash",
-                                    "tail -n 300 -F /var/log/cloud-init.log /var/log/cfn-init.log | ccze"
-                                ]] },
-                                "mode": "0755"
-                            },
                             "/etc/facter/facts.d/environment.txt": {
                                 "content": { "Fn::Join" : ["=", ["environment", { "Ref" : "PuppetEnvironment" }]] }
                             },
@@ -580,8 +573,8 @@
                                         "--availability-zone $(facter ec2_placement_availability_zone)",
                                         "--size", { "Ref" : "EncryptedVolumeSize" },
                                         "--volume-type gp2 --encrypted",
-                                        "| jq '.VolumeId'",
-                                        "> /var/lib/cloud/created-volume-id"
+                                        "| jq -r '.VolumeId'",
+                                        "> /var/lib/cloud/created-volume-id",
                                         "&& sleep 30"
                                     ]] },
                                     "true"
@@ -597,7 +590,7 @@
                                         "--region", { "Ref" : "AWS::Region" },
                                         "--resources $(cat /var/lib/cloud/created-volume-id)",
                                         { "Fn::Join": [ "", ["--tags Key=Name,Value=", { "Ref" : "BaseInstanceTag"}, "-encrypted"] ] },
-                                        "&& cp /var/lib/created-volume-id /var/lib/secondary-volume-id"
+                                        "&& cp /var/lib/cloud/created-volume-id /var/lib/secondary-volume-id"
                                     ]] },
                                     "true"
                                 ]},
