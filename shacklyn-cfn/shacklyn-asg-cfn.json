@@ -582,6 +582,7 @@
                                         "--volume-type gp2 --encrypted",
                                         "| jq '.VolumeId'",
                                         "> /var/lib/cloud/created-volume-id"
+                                        "&& sleep 30"
                                     ]] },
                                     "true"
                                 ]},
@@ -597,7 +598,6 @@
                                         "--resources $(cat /var/lib/cloud/created-volume-id)",
                                         { "Fn::Join": [ "", ["--tags Key=Name,Value=", { "Ref" : "BaseInstanceTag"}, "-encrypted"] ] },
                                         "&& cp /var/lib/created-volume-id /var/lib/secondary-volume-id"
-                                        "&& sleep 30"
                                     ]] },
                                     "true"
                                 ]},
