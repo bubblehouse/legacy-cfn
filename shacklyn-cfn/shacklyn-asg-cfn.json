@@ -456,7 +456,7 @@
                                     "exec { tag:",
                                     "  command => join(['aws ec2 create-tags --resources ', $ec2_instance_id, ' --tags Key=Name,Value=', $instance_name], ''),",
                                     "  environment => 'AWS_DEFAULT_REGION=us-east-1',",
-                                    "  path => '/usr/bin'",
+                                    "  path => '/usr/local/bin'",
                                     "}",
                                     "exec { hostname:",
                                     { "Fn::Join" : ["", ["  command => \"/bin/hostname -b ", { "Ref" : "BaseInstanceTag" }, "-${instance_slug}.", { "Ref" : "EndpointZone" }, "\""]]},
@@ -566,7 +566,7 @@
                                 ]},
                                 "ignoreErrors": true
                             },
-                            "0950_awscli-create-volume": {
+                            "0910_awscli-create-volume": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     { "Fn::Join": [ " ", [
@@ -580,10 +580,10 @@
                                     ]] },
                                     "true"
                                 ]},
-                                "test" : "test \"$(cat /var/lib/cloud/secondary-volume-id)\" == \"null\"",
+                                "test" : "bash -c 'test \"$(cat /var/lib/cloud/secondary-volume-id)\" == \"null\"'",
                                 "ignoreErrors": true
                             },
-                            "0950_awscli-create-volume-tags": {
+                            "0920_awscli-create-volume-tags": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     { "Fn::Join": [ " ", [
