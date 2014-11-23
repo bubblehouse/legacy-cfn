@@ -555,7 +555,7 @@
                             "0750_configure-nat": {
                                 "command": {"Fn::If" : [
                                     "ConfigureNAT",
-                                    "bash -c /usr/local/sbin/configure-nat.sh",
+                                    "bash -x /usr/local/sbin/configure-nat.sh",
                                     "true"
                                 ]}
                             },                            
