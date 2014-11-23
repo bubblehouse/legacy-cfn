@@ -574,11 +574,28 @@
                                         "--region", { "Ref" : "AWS::Region" },
                                         "--availability-zone $(facter ec2_placement_availability_zone)",
                                         "--size", { "Ref" : "EncryptedVolumeSize" },
-                                        "--volume-type gp2 --encrypted"
+                                        "--volume-type gp2 --encrypted",
+                                        "| jq '.VolumeId'",
+                                        "> /var/lib/cloud/created-volume-id"
                                     ]] },
                                     "true"
                                 ]},
-                                "test" : "test $(cat /var/lib/cloud/secondary-volume-id) == \"null\""
+                                "test" : "test $(cat /var/lib/cloud/secondary-volume-id) == \"null\"",
+                                "ignoreErrors": true
+                            },
+                            "0950_awscli-create-volume-tags": {
+                                "command": {"Fn::If" : [
+                                    "NeedsEncryptedVolume",
+                                    { "Fn::Join": [ " ", [
+                                        "aws", "ec2", "create-tags",
+                                        "--region", { "Ref" : "AWS::Region" },
+                                        "--resources $(cat /var/lib/cloud/created-volume-id)",
+                                        { "Fn::Join": [ "", ["--tags Key=Name,Value=", { "Ref" : "BaseInstanceTag"}, "-encrypted"] ] },
+                                        "&& cp /var/lib/created-volume-id /var/lib/secondary-volume-id"
+                                    ]] },
+                                    "true"
+                                ]},
+                                "test" : "test -e /var/lib/cloud/created-volume-id",
                                 "ignoreErrors": true
                             },
                             "1000_wait-for-volume": {
@@ -596,13 +613,7 @@
                                         "aws", "ec2", "attach-volume",
                                         "--region", { "Ref" : "AWS::Region" },
                                         "--instance-id", "$(cat /var/lib/cloud/data/instance-id)",
-                                        "--volume-id", { "Fn::Join": [ " ", [
-                                            "$(aws ec2 describe-volumes",
-                                            "--region", { "Ref" : "AWS::Region" },
-                                            "--filters Name=tag-key,Values=Name",
-                                            { "Fn::Join": [ "", ["Name=tag-value,Values=", { "Ref" : "BaseInstanceTag"}, "-encrypted"] ] },
-                                            "| jq -r '.Volumes|.[0]|.VolumeId')"
-                                        ]] },
+                                        "--volume-id", "$(cat /var/lib/cloud/secondary-volume-id)",
                                         "--device /dev/sdf"
                                     ]] },
                                     "true"
