@@ -95,9 +95,7 @@
             { "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] },
             { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "ElasticNetworkInterfaceID"}, ""] }] }
         ] },
-        "AttachNetworkInterface" : { "Fn::And" : [
-            { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "ElasticNetworkInterfaceID"}, ""] }] }
-        ] }
+        "AttachNetworkInterface" : { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "ElasticNetworkInterfaceID"}, ""] }] }
     },
     
     "Resources": {
@@ -534,7 +532,7 @@
                             },
                             "0006_chmod-ec2net-hotplug": {
                                 "command": "chmod 744 /etc/network/ec2net.hotplug"
-                            }
+                            },
                             "0007_awscli-attach-elastic-ip": {
                                 "command": {"Fn::If" : [
                                     "AssociateStaticIpToInstance",
@@ -557,7 +555,7 @@
                                         " --network-interface-id", { "Ref" : "staticInternalInterface" },
                                         " --device-index", "1",
                                         " --instance-id", "$(cat /var/lib/cloud/data/instance-id)"
-                                    ]] }
+                                    ]] },
                                     "true"
                                 ]}
                             },
