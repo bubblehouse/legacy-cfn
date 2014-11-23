@@ -85,7 +85,7 @@
         "NeedsPublicAddress" : { "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] },
         "NeedsEncryptedVolume" : { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "EncryptedVolumeSize"}, "0"] }] },
         "NeedsLoadBalancer" : { "Fn::Not": [{ "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] }] },
-        "ConfigureNAT" : { "Fn::Equals" : [{ "Ref" : "ConfigureAsGateway" }, "false"]},
+        "ConfigureNAT" : { "Fn::Equals" : [{ "Ref" : "ConfigureAsGateway" }, "true"]},
         "DisableSourceDestCheckOnInstance" : { "Fn::And" : [
             { "Fn::Equals" : [{ "Ref" : "ConfigureAsGateway" }, "false"]},
             { "Fn::Equals" : [{ "Ref" : "ElasticNetworkInterfaceID"}, ""] }
