@@ -69,6 +69,11 @@
             "Description": "Should this instance perform the source-destination check?",
             "Type": "String"
         },
+        "RootVolumeSize" : {
+            "Default": "30",
+            "Description": "How big should this instance's encrypted volume be (gigabytes)?",
+            "Type": "Number"
+        },
         "EncryptedVolumeSize" : {
             "Default": "8",
             "Description": "How big should this instance's encrypted volume be (gigabytes)?",
@@ -356,7 +361,7 @@
                 "KeyName": { "Ref" : "KeyPairName" },
                 "BlockDeviceMappings": [{
                     "DeviceName" : "/dev/sda1",
-                    "Ebs" : { "VolumeType": "gp2", "VolumeSize" : 100 }
+                    "Ebs" : { "VolumeType": "gp2", "VolumeSize" : { "Ref" : "RootVolumeSize" } }
                 }, {
                     "DeviceName" : "/dev/sdb",
                     "VirtualName" : "ephemeral0"
@@ -566,7 +571,7 @@
                                 ]},
                                 "ignoreErrors": true
                             },
-                            "0910_awscli-create-volume": {
+                            "1000_awscli-create-volume": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     { "Fn::Join": [ " ", [
@@ -583,7 +588,7 @@
                                 "test" : "bash -c 'test \"$(cat /var/lib/cloud/secondary-volume-id)\" == \"null\"'",
                                 "ignoreErrors": true
                             },
-                            "0920_awscli-create-volume-tags": {
+                            "1100_awscli-create-volume-tags": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     { "Fn::Join": [ " ", [
@@ -592,21 +597,14 @@
                                         "--resources $(cat /var/lib/cloud/created-volume-id)",
                                         { "Fn::Join": [ "", ["--tags Key=Name,Value=", { "Ref" : "BaseInstanceTag"}, "-encrypted"] ] },
                                         "&& cp /var/lib/created-volume-id /var/lib/secondary-volume-id"
+                                        "&& sleep 30"
                                     ]] },
                                     "true"
                                 ]},
                                 "test" : "test -e /var/lib/cloud/created-volume-id",
                                 "ignoreErrors": true
                             },
-                            "1000_wait-for-volume": {
-                                "command": {"Fn::If" : [
-                                    "NeedsEncryptedVolume",
-                                    "sleep 30",
-                                    "true"
-                                ]},
-                                "ignoreErrors": true
-                            },
-                            "1100_awscli-attach-volume": {
+                            "1200_awscli-attach-volume": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     { "Fn::Join": [ " ", [
@@ -614,16 +612,9 @@
                                         "--region", { "Ref" : "AWS::Region" },
                                         "--instance-id", "$(cat /var/lib/cloud/data/instance-id)",
                                         "--volume-id", "$(cat /var/lib/cloud/secondary-volume-id)",
-                                        "--device /dev/sdf"
+                                        "--device /dev/sdf",
+                                        "&& sleep 30"
                                     ]] },
-                                    "true"
-                                ]},
-                                "ignoreErrors": true
-                            },
-                            "1200_wait-for-volume": {
-                                "command": {"Fn::If" : [
-                                    "NeedsEncryptedVolume",
-                                    "sleep 30",
                                     "true"
                                 ]},
                                 "ignoreErrors": true
