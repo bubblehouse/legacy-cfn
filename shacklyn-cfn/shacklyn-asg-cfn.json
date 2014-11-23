@@ -81,9 +81,19 @@
         "NeedsEncryptedVolume" : { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "EncryptedVolumeSize"}, "0"] }] },
         "NeedsLoadBalancer" : { "Fn::Not": [{ "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] }] },
         "DisableSourceDestCheck" : {"Fn::Equals" : [{ "Ref" : "SourceDestCheck" }, "false"]},
-        "AssociateStaticIP" : { "Fn::And" : [
+        "NeedsStaticIp" : { "Fn::And" : [
             { "Fn::Equals" : [{ "Ref" : "NumInstances"}, "1"] },
             { "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] }
+        ] },
+        "AssociateStaticIpToInstance" : { "Fn::And" : [
+            { "Fn::Equals" : [{ "Ref" : "NumInstances"}, "1"] },
+            { "Fn::Equals" : [{ "Ref" : "ElasticNetworkInterfaceID"}, ""] },
+            { "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] }
+        ] },
+        "AssociateStaticIpToInterface" : { "Fn::And" : [
+            { "Fn::Equals" : [{ "Ref" : "NumInstances"}, "1"] },
+            { "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] },
+            { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "ElasticNetworkInterfaceID"}, ""] }] }
         ] }
     },
     
@@ -106,7 +116,7 @@
         },
         "eipRecordSetGroup" : {
             "Type" : "AWS::Route53::RecordSetGroup",
-            "Condition": "AssociateStaticIP",
+            "Condition": "NeedsStaticIp",
             "DependsOn": ["autoScaleGroup"],
             "Properties" : {
                 "HostedZoneName" : { "Fn::Join" : ["", [{ "Ref" : "EndpointZone"}, "."]] },
@@ -114,19 +124,27 @@
                     "Name" : { "Fn::Join" : ["", [{ "Ref" : "EndpointDNSName"}, ".", { "Ref" : "EndpointZone"}, "."]] },
                     "Type" : "A",
                     "TTL": 300,
-                    "ResourceRecords" : [{
-                        "Value": "10.0.0.0"
-                    }]
+                    "ResourceRecords" : [
+                        "Value": { "Fn::GetAtt" : ["staticAddress", "CanonicalHostedZoneNameID"] }
+                    ]
                 }]
             }
         },
         "staticAddress" : {
             "Type" : "AWS::EC2::EIP",
-            "Condition": "AssociateStaticIP",
+            "Condition": "NeedsStaticIp",
             "Properties" : {
                 "Domain" : "vpc"
             }
         },
+        "staticAddressAssociation" : {
+           "Type": "AWS::EC2::EIPAssociation",
+           "Condition": "AssociateStaticIpToInterface",
+           "Properties": {
+              "AllocationId": { "Ref" : "staticAddress" },
+              "NetworkInterfaceId": { "Ref" : "ElasticNetworkInterfaceID" }
+           }
+        }
         "autoScaleQueue": {
             "Type" : "AWS::SQS::Queue",
             "Properties" : {
@@ -497,7 +515,7 @@
                             },
                             "0003_awscli-attach-elastic-ip": {
                                 "command": {"Fn::If" : [
-                                    "AssociateStaticIP",
+                                    "AssociateStaticIpToInstance",
                                     { "Fn::Join": [ " ", [
                                         "aws", "ec2", "associate-address",
                                         "--region", { "Ref" : "AWS::Region" },

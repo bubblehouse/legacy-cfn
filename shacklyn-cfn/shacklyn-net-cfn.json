@@ -178,7 +178,7 @@
                 "DomainNameServers" : { "Fn::If" : [
                     "UpdateDhcpDns",
                     [ { "Ref" : "DhcpNs1" }, { "Ref" : "DhcpNs2" } ],
-                    { "Ref" : "AWS::NoValue" }
+                    [ "AmazonProvidedDNS" ]
                 ]},
                 "Tags" : [{
                     "Key": "Name",
