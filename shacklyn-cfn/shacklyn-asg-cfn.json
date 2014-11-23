@@ -497,7 +497,7 @@
                             },
                             "0003_awscli-attach-elastic-ip": {
                                 "command": {"Fn::If" : [
-                                    "AssociatePublicIpAddress",
+                                    "AssociateStaticIP",
                                     { "Fn::Join": [ " ", [
                                         "aws", "ec2", "associate-address",
                                         "--region", { "Ref" : "AWS::Region" },

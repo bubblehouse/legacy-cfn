@@ -144,7 +144,7 @@
                 "Parameters" : {
                     "AvailabiltyZoneIds": { "Fn::Join" : ["", [{ "Ref" : "AWS::Region" }, { "Ref" : "ManagementAZ" }] ]},
                     "BaseInstanceTag": { "Fn::Join" : ["", [{ "Ref" : "BaseName" }, "-001-nat"] ]},
-                    "InstanceType": "m1.small",
+                    "InstanceType": "t2.micro",
                     "KeyPairName": { "Ref" : "GatewayKeyPair" },
                     "PuppetEnvironment": { "Ref" : "BaseName" },
                     "SecurityGroupIds": { "Ref" : "natGatewayInterfaceSecurityGroup" },
