@@ -580,7 +580,7 @@
                                     ]] },
                                     "true"
                                 ]},
-                                "test" : "test $(cat /var/lib/cloud/secondary-volume-id) == \"null\"",
+                                "test" : "test \"$(cat /var/lib/cloud/secondary-volume-id)\" == \"null\"",
                                 "ignoreErrors": true
                             },
                             "0950_awscli-create-volume-tags": {
