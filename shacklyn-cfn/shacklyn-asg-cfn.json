@@ -411,6 +411,7 @@
                         "Content-Disposition: attachment; filename=\"user-data.sh\"",
                         "",
                         "#!/bin/bash -x",
+                        { "Fn::Join": [ "", ["echo AWS_DEFAULT_REGION=", { "Ref" : "AWS::Region"}, " >> /etc/environment"]] },
                         "pip install -U awscli",
                         "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz",
                         { "Fn::Join": [ "", [
@@ -454,8 +455,8 @@
                                     { "Fn::Join" : ["", ["$instance_name = \"", { "Ref" : "BaseInstanceTag" }, "-${instance_slug}\""]]},
                                     "exec { tag:",
                                     "  command => join(['aws ec2 create-tags --resources ', $ec2_instance_id, ' --tags Key=Name,Value=', $instance_name], ''),",
-                                    "  environment => 'AWS_DEFAULT_REGION=us-east-1',",
-                                    "  path => '/usr/local/bin'",
+                                    "  path => '/usr/local/bin',",
+                                    { "Fn::Join": [ "", ["  environment => 'AWS_DEFAULT_REGION=", { "Ref" : "AWS::Region"}]] },
                                     "}",
                                     "exec { hostname:",
                                     { "Fn::Join" : ["", ["  command => \"/bin/hostname -b ", { "Ref" : "BaseInstanceTag" }, "-${instance_slug}.", { "Ref" : "EndpointZone" }, "\""]]},
@@ -542,7 +543,7 @@
                                         "--size", { "Ref" : "EncryptedVolumeSize" },
                                         "--volume-type gp2 --encrypted",
                                         "| jq -r '.VolumeId'",
-                                        "> /var/lib/cloud/created-volume-id",
+                                        "> /var/lib/cloud/created-volume-id"
                                     ]] },
                                     "true"
                                 ]},
