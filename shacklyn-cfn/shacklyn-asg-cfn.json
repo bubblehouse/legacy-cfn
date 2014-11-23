@@ -75,7 +75,7 @@
             "Type": "Number"
         },
         "EncryptedVolumeSize" : {
-            "Default": "8",
+            "Default": "0",
             "Description": "How big should this instance's encrypted volume be (gigabytes)?",
             "Type": "Number"
         }
@@ -85,8 +85,9 @@
         "NeedsPublicAddress" : { "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] },
         "NeedsEncryptedVolume" : { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "EncryptedVolumeSize"}, "0"] }] },
         "NeedsLoadBalancer" : { "Fn::Not": [{ "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] }] },
+        "ConfigureNAT" : { "Fn::Equals" : [{ "Ref" : "ConfigureNAT" }, "false"]},
         "DisableSourceDestCheck" : { "Fn::And" : [
-            { "Fn::Equals" : [{ "Ref" : "SourceDestCheck" }, "false"]},
+            { "Fn::Equals" : [{ "Ref" : "ConfigureNAT" }, "false"]},
             { "Fn::Equals" : [{ "Ref" : "ElasticNetworkInterfaceID"}, ""] }
         ] },
         "NeedsStaticIp" : { "Fn::And" : [
@@ -485,6 +486,20 @@
                                     "  minute  => '*/30'",
                                     "}"
                                 ]] }
+                            },
+                            "/usr/local/sbin/configure-nat.sh": {
+                                "content": { "Fn::Join": [ "\n", [
+                                    "#!/bin/bash -x",
+                                    "PATH=/usr/sbin:/sbin:/usr/bin:/bin",
+                                    "INTERFACE=eth1",
+                                    "ETH_MAC=$(facter macaddress_${INTERFACE})",
+                                    "VPC_CIDR_RANGE=$(facter ec2_network_interfaces_macs_${ETH_MAC}_vpc_ipv4_cidr_block)",
+                                    "sysctl -q -w net.ipv4.ip_forward=1 net.ipv4.conf.eth0.send_redirects=0 && (",
+                                    "   iptables -t nat -C POSTROUTING -o ${INTERFACE} -s ${VPC_CIDR_RANGE} -j MASQUERADE 2> /dev/null ||",
+                                    "   iptables -t nat -A POSTROUTING -o ${INTERFACE} -s ${VPC_CIDR_RANGE} -j MASQUERADE ) || exit",
+                                    "sysctl net.ipv4.ip_forward net.ipv4.conf.eth0.send_redirects",
+                                    "iptables -n -t nat -L POSTROUTING"
+                                ]] }
                             }
                         },
                         "commands": {
@@ -537,6 +552,13 @@
                                     "true"
                                 ]}
                             },
+                            "0750_configure-nat": {
+                                "command": {"Fn::If" : [
+                                    "ConfigureNAT",
+                                    "bash -c /usr/local/sbin/configure-nat.sh",
+                                    "true"
+                                ]}
+                            },                            
                             "0800_awscli-disable-source-dest-check": {
                                 "command": {"Fn::If" : [
                                     "DisableSourceDestCheck",
@@ -589,7 +611,7 @@
                                         "aws", "ec2", "create-tags",
                                         "--region", { "Ref" : "AWS::Region" },
                                         "--resources $(cat /var/lib/cloud/created-volume-id)",
-                                        { "Fn::Join": [ "", ["--tags Key=Name,Value=", { "Ref" : "BaseInstanceTag"}, "-encrypted"] ] },
+                                        { "Fn::Join": [ "", ["--tags Key=Name,Value=", { "Ref" : "BaseInstanceTag"}, "-$(facter ec2_placement_availability_zone)-encrypted"] ] },
                                         "&& cp /var/lib/cloud/created-volume-id /var/lib/cloud/secondary-volume-id"
                                     ]] },
                                     "true"
