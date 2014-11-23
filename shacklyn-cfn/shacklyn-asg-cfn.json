@@ -397,7 +397,7 @@
                         "Content-Transfer-Encoding: 7bit",
                         "Content-Disposition: attachment; filename=\"user-data.sh\"",
                         "",
-                        "#!/bin/bash -ex",
+                        "#!/bin/bash -x",
                         "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz",
                         { "Fn::Join": [ "", [
                             "cfn-init -v -s ", { "Ref": "AWS::StackName" }, " --region ", { "Ref": "AWS::Region" }, " -r launchConfiguration"
