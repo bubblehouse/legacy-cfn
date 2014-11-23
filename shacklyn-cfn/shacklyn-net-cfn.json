@@ -148,7 +148,7 @@
                     "KeyPairName": { "Ref" : "GatewayKeyPair" },
                     "PuppetEnvironment": { "Ref" : "BaseName" },
                     "SecurityGroupIds": { "Ref" : "natGatewayInterfaceSecurityGroup" },
-                    "SelectedImageId": "ami-224dc94a",
+                    "SelectedImageId": "ami-864d84ee",
                     "EC2SubnetIds": { "Ref" : "managementPublicSubnet" },
                     "SourceDestCheck": "false",
                     "NumInstances": "1",
