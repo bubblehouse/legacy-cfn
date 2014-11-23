@@ -107,7 +107,7 @@
             "Description" : "VPC container ID"
         },
         "natSecurityGroupId" : {
-            "Value" : { "Ref" : "natGatewayInterfaceSecurityGroup" },
+            "Value" : { "Ref" : "natSg" },
             "Description" : "Security group for NAT gateway"
         },
         "managementPrivateSubnetId" : {
@@ -147,7 +147,7 @@
                     "InstanceType": "t2.micro",
                     "KeyPairName": { "Ref" : "GatewayKeyPair" },
                     "PuppetEnvironment": { "Ref" : "BaseName" },
-                    "SecurityGroupIds": { "Ref" : "natGatewayInterfaceSecurityGroup" },
+                    "SecurityGroupIds": { "Ref" : "natSg" },
                     "SelectedImageId": "ami-864d84ee",
                     "EC2SubnetIds": { "Ref" : "managementPublicSubnet" },
                     "SourceDestCheck": "false",
@@ -202,7 +202,7 @@
                 }]
             }
         },
-        "natGatewayInterfaceSecurityGroup": {
+        "natSg": {
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
                 "VpcId" : { "Ref" : "network" },
@@ -229,7 +229,7 @@
             "Properties" : {
                 "Description" : { "Fn::Join" : [ " ", ["Private outbound traffic for the", { "Ref" : "BaseName" }, "network"]] },
                 "SourceDestCheck" : false,
-                "GroupSet": [ { "Ref" : "natGatewayInterfaceSecurityGroup"} ],
+                "GroupSet": [ { "Ref" : "natSg"} ],
                 "SubnetId" : { "Ref" : "managementPublicSubnet" },
                 "Tags" : [{
                     "Key": "Name",
