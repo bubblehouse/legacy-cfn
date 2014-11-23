@@ -390,6 +390,7 @@
                         " - python-pip",
                         " - augeas-tools",
                         " - tree",
+                        " - ccze",
                         "",
                         "--===============5031922726237328048==",
                         "Content-Type: text/x-shellscript; charset=\"us-ascii\"",
@@ -424,6 +425,13 @@
                         "files": {
                             "/usr/local/bin/jq": {
                                 "source": "http://stedolan.github.io/jq/download/linux64/jq"
+                            },
+                            "/usr/local/bin/tail-cfn-logs": {
+                                "content": { "Fn::Join" : ["\n", [
+                                    "#!/bin/bash",
+                                    "tail -n 300 -F /var/log/cloud-init.log /var/log/cfn-init.log"
+                                ]] },
+                                "mode": "0755"
                             },
                             "/etc/facter/facts.d/environment.txt": {
                                 "content": { "Fn::Join" : ["=", ["environment", { "Ref" : "PuppetEnvironment" }]] }
@@ -482,7 +490,60 @@
                                 "command": "puppet apply --parser=future /etc/puppet/cfn/bootstrap.pp",
                                 "ignoreErrors": true
                             },
-                            "0002_awscli-create-volume": {
+                            "0002_copy-udev-rules": {
+                                "command": "cp *.rules /etc/udev/rules.d/.",
+                                "cwd": "/usr/src/ubuntu-ec2-net-utils"
+                            },
+                            "0003_copy-dhclient-hook": {
+                                "command": "cp ec2dhcp /etc/dhcp/dhclient-exit-hooks.d/.",
+                                "cwd": "/usr/src/ubuntu-ec2-net-utils"
+                            },
+                            "0004_copy-ec2net-functions": {
+                                "command": "cp ec2net-functions ec2net.hotplug /etc/network/.",
+                                "cwd": "/usr/src/ubuntu-ec2-net-utils"
+                            },
+                            "0005_chmod-ec2net-hotplug": {
+                                "command": "chmod 744 /etc/network/ec2net.hotplug"
+                            },
+                            "0006_awscli-attach-elastic-ip": {
+                                "command": {"Fn::If" : [
+                                    "AssociateStaticIpToInstance",
+                                    { "Fn::Join": [ " ", [
+                                        "aws", "ec2", "associate-address",
+                                        "--region", { "Ref" : "AWS::Region" },
+                                        "--instance-id", "$(cat /var/lib/cloud/data/instance-id)",
+                                        "--public-ip", {"Ref" : "staticAddress"},
+                                        "--allow-reassociation"
+                                    ]] },
+                                    "true"
+                                ]}
+                            },
+                            "0007_awscli-attach-network-interface": {
+                                "command": {"Fn::If" : [
+                                    "AttachNetworkInterface",
+                                    { "Fn::Join": [ " ", [
+                                        "aws", "ec2", "attach-network-interface",
+                                        " --region", { "Ref" : "AWS::Region" },
+                                        " --network-interface-id", { "Ref" : "ElasticNetworkInterfaceID" },
+                                        " --device-index", "1",
+                                        " --instance-id", "$(cat /var/lib/cloud/data/instance-id)"
+                                    ]] },
+                                    "true"
+                                ]}
+                            },
+                            "0008_awscli-disable-source-dest-check": {
+                                "command": {"Fn::If" : [
+                                    "DisableSourceDestCheck",
+                                    { "Fn::Join": [ " ", [
+                                        "aws", "ec2", "modify-instance-attribute",
+                                        "--region", { "Ref" : "AWS::Region" },
+                                        "--instance-id", "$(cat /var/lib/cloud/data/instance-id)",
+                                        "--no-source-dest-check"
+                                    ]] },
+                                    "true"
+                                ]}
+                            },
+                            "0009_awscli-create-volume": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     { "Fn::Join": [ " ", [
@@ -500,9 +561,18 @@
                                     "--filters Name=tag-key,Values=Name",
                                     { "Fn::Join": [ "", ["Name=tag-value,Values=", { "Ref" : "BaseInstanceTag"}, "-encrypted"] ] },
                                     "| jq -e '(.Volumes | length) == 0'"
-                                ]] }
+                                ]] },
+                                "ignoreErrors": true
                             },
-                            "0002_awscli-attach-volume": {
+                            "0010_wait-for-volume": {
+                                "command": {"Fn::If" : [
+                                    "NeedsEncryptedVolume",
+                                    "sleep 30",
+                                    "true"
+                                ]},
+                                "ignoreErrors": true
+                            },
+                            "0011_awscli-attach-volume": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     { "Fn::Join": [ " ", [
@@ -518,76 +588,26 @@
                                         "--device /dev/sdf"
                                     ]] },
                                     "true"
-                                ]}
+                                ]},
+                                "ignoreErrors": true
                             },
-                            "0003_copy-udev-rules": {
-                                "command": "cp *.rules /etc/udev/rules.d/.",
-                                "cwd": "/usr/src/ubuntu-ec2-net-utils"
-                            },
-                            "0004_copy-dhclient-hook": {
-                                "command": "cp ec2dhcp /etc/dhcp/dhclient-exit-hooks.d/.",
-                                "cwd": "/usr/src/ubuntu-ec2-net-utils"
-                            },
-                            "0005_copy-ec2net-functions": {
-                                "command": "cp ec2net-functions ec2net.hotplug /etc/network/.",
-                                "cwd": "/usr/src/ubuntu-ec2-net-utils"
-                            },
-                            "0006_chmod-ec2net-hotplug": {
-                                "command": "chmod 744 /etc/network/ec2net.hotplug"
-                            },
-                            "0007_awscli-attach-elastic-ip": {
-                                "command": {"Fn::If" : [
-                                    "AssociateStaticIpToInstance",
-                                    { "Fn::Join": [ " ", [
-                                        "aws", "ec2", "associate-address",
-                                        "--region", { "Ref" : "AWS::Region" },
-                                        "--instance-id", "$(cat /var/lib/cloud/data/instance-id)",
-                                        "--public-ip", {"Ref" : "staticAddress"},
-                                        "--allow-reassociation"
-                                    ]] },
-                                    "true"
-                                ]}
-                            },
-                            "0008_awscli-attach-network-interface": {
-                                "command": {"Fn::If" : [
-                                    "AttachNetworkInterface",
-                                    { "Fn::Join": [ " ", [
-                                        "aws", "ec2", "attach-network-interface",
-                                        " --region", { "Ref" : "AWS::Region" },
-                                        " --network-interface-id", { "Ref" : "ElasticNetworkInterfaceID" },
-                                        " --device-index", "1",
-                                        " --instance-id", "$(cat /var/lib/cloud/data/instance-id)"
-                                    ]] },
-                                    "true"
-                                ]}
-                            },
-                            "0009_awscli-disable-source-dest-check": {
-                                "command": {"Fn::If" : [
-                                    "DisableSourceDestCheck",
-                                    { "Fn::Join": [ " ", [
-                                        "aws", "ec2", "modify-instance-attribute",
-                                        "--region", { "Ref" : "AWS::Region" },
-                                        "--instance-id", "$(cat /var/lib/cloud/data/instance-id)",
-                                        "--no-source-dest-check"
-                                    ]] },
-                                    "true"
-                                ]}
-                            },
-                            "0010_wait-for-volume": {
+                            "0012_wait-for-volume": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     "sleep 30",
                                     "true"
-                                ]}
+                                ]},
+                                "ignoreErrors": true
                             },
-                            "0011_mount-volume": {
+                            "0013_mount-volume": {
                                 "command": {"Fn::If" : [
                                     "NeedsEncryptedVolume",
                                     "mount /dev/xvdf",
                                     "true"
-                                ]}
+                                ]},
+                                "ignoreErrors": true
                             },
-                            "0012_puppet-agent-first-run": {
+                            "0014_puppet-agent-first-run": {
                                 "command": "puppet agent --test",
                                 "ignoreErrors": true
                             }
