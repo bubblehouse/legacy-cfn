@@ -80,7 +80,10 @@
         "NeedsPublicAddress" : { "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] },
         "NeedsEncryptedVolume" : { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "EncryptedVolumeSize"}, "0"] }] },
         "NeedsLoadBalancer" : { "Fn::Not": [{ "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] }] },
-        "DisableSourceDestCheck" : {"Fn::Equals" : [{ "Ref" : "SourceDestCheck" }, "false"]},
+        "DisableSourceDestCheck" : { "Fn::And" : [
+            { "Fn::Equals" : [{ "Ref" : "SourceDestCheck" }, "false"]},
+            { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "ElasticNetworkInterfaceID"}, ""] }] }
+        ] },
         "NeedsStaticIp" : { "Fn::And" : [
             { "Fn::Equals" : [{ "Ref" : "NumInstances"}, "1"] },
             { "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] }
