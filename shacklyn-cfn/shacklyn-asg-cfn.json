@@ -487,6 +487,7 @@
                                     "NeedsEncryptedVolume",
                                     { "Fn::Join": [ " ", [
                                         "aws", "ec2", "create-volume",
+                                        "--region", { "Ref" : "AWS::Region" },
                                         "--availability-zone $(facter ec2_placement_availability_zone)",
                                         "--size", { "Ref" : "EncryptedVolumeSize" },
                                         "--volume-type gp2 --encrypted"
@@ -495,6 +496,7 @@
                                 ]},
                                 "test" : { "Fn::Join": [ " ", [
                                     "aws ec2 describe-volumes",
+                                    "--region", { "Ref" : "AWS::Region" },
                                     "--filters Name=tag-key,Values=Name",
                                     { "Fn::Join": [ "", ["Name=tag-value,Values=", { "Ref" : "BaseInstanceTag"}, "-encrypted"] ] },
                                     "| jq -e '(.Volumes | length) == 0'"
