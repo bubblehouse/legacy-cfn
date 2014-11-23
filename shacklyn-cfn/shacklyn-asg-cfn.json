@@ -590,7 +590,7 @@
                                         "--region", { "Ref" : "AWS::Region" },
                                         "--resources $(cat /var/lib/cloud/created-volume-id)",
                                         { "Fn::Join": [ "", ["--tags Key=Name,Value=", { "Ref" : "BaseInstanceTag"}, "-encrypted"] ] },
-                                        "&& cp /var/lib/cloud/created-volume-id /var/lib/secondary-volume-id"
+                                        "&& cp /var/lib/cloud/created-volume-id /var/lib/cloud/secondary-volume-id"
                                     ]] },
                                     "true"
                                 ]},
