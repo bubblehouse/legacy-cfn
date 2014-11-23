@@ -43,12 +43,12 @@
     },
     
     "Resources" : {
-        "dev" : {
+        "hub" : {
             "Type" : "AWS::CloudFormation::Stack",
             "Properties" : {
                 "TemplateURL" : "https://s3.amazonaws.com/cf.shacklyn.net/shacklyn-net-cfn.json",
                 "Parameters" : {
-                    "BaseName": "dev",
+                    "BaseName": "hub",
                     "BaseNetwork": "10.0.0.0/16",
                     "DhcpDomainName": { "Ref" : "DhcpDomainName" },
                     "DhcpNs1": { "Ref" : "DhcpNs1" },

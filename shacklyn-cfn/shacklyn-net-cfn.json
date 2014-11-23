@@ -150,7 +150,7 @@
                     "SecurityGroupIds": { "Ref" : "natSg" },
                     "SelectedImageId": "ami-864d84ee",
                     "EC2SubnetIds": { "Ref" : "managementPublicSubnet" },
-                    "ConfigureNAT": "true",
+                    "ConfigureAsGateway": "true",
                     "NumInstances": "1",
                     "ElasticNetworkInterfaceID": { "Ref" : "natGatewayInterface" },
                     "EndpointDNSName": { "Fn::Join" : ["-", ["nat", { "Ref" : "BaseName" }] ]},

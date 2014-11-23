@@ -1,7 +1,7 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
     
-    "Description": "Shacklyn fixed autoscale group stack",
+    "Description": "Shacklyn fixed autoscale stack",
     
     "Parameters": {
         "AvailabiltyZoneIds": {
@@ -62,7 +62,7 @@
             "Description": "Number of instances in this group.",
             "Type": "String"
         },
-        "SourceDestCheck" : {
+        "ConfigureAsGateway" : {
             "Default": "true",
             "AllowedValues" : ["true", "false"],
             "ConstraintDescription" : "You must specify true or false.",
@@ -85,9 +85,9 @@
         "NeedsPublicAddress" : { "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] },
         "NeedsEncryptedVolume" : { "Fn::Not": [{ "Fn::Equals" : [{ "Ref" : "EncryptedVolumeSize"}, "0"] }] },
         "NeedsLoadBalancer" : { "Fn::Not": [{ "Fn::Equals" : [{ "Fn::Join" : [",", { "Ref" : "ELBSubnetIds"}] }, ""] }] },
-        "ConfigureNAT" : { "Fn::Equals" : [{ "Ref" : "ConfigureNAT" }, "false"]},
-        "DisableSourceDestCheck" : { "Fn::And" : [
-            { "Fn::Equals" : [{ "Ref" : "ConfigureNAT" }, "false"]},
+        "ConfigureNAT" : { "Fn::Equals" : [{ "Ref" : "ConfigureAsGateway" }, "false"]},
+        "DisableSourceDestCheckOnInstance" : { "Fn::And" : [
+            { "Fn::Equals" : [{ "Ref" : "ConfigureAsGateway" }, "false"]},
             { "Fn::Equals" : [{ "Ref" : "ElasticNetworkInterfaceID"}, ""] }
         ] },
         "NeedsStaticIp" : { "Fn::And" : [
@@ -561,7 +561,7 @@
                             },                            
                             "0800_awscli-disable-source-dest-check": {
                                 "command": {"Fn::If" : [
-                                    "DisableSourceDestCheck",
+                                    "DisableSourceDestCheckOnInstance",
                                     { "Fn::Join": [ " ", [
                                         "aws", "ec2", "modify-instance-attribute",
                                         "--region", { "Ref" : "AWS::Region" },
