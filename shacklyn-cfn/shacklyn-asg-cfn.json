@@ -380,7 +380,7 @@
                             "NeedsEncryptedVolume",
                             " - [ /dev/xvdf, /media/encrypted, auto, \"defaults,nobootwait,nofail\", \"0\", \"2\" ]\n - [ swap, null ]",
                             " - [ swap, null ]"
-                        ]}
+                        ]},
                         "apt_update: true",
                         "apt_sources:",
                         "- source: \"deb http://apt.puppetlabs.com trusty main\"",
@@ -390,7 +390,6 @@
                         "  keyid: 4BD6EC30",
                         "  filename: puppetlabs.list",
                         "packages:",
-                        " - awscli",
                         " - puppet",
                         " - bundler",
                         " - git",
@@ -406,6 +405,7 @@
                         "Content-Disposition: attachment; filename=\"user-data.sh\"",
                         "",
                         "#!/bin/bash -x",
+                        "pip install -U awscli",
                         "pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz",
                         { "Fn::Join": [ "", [
                             "cfn-init -v -s ", { "Ref": "AWS::StackName" }, " --region ", { "Ref": "AWS::Region" }, " -r launchConfiguration"
